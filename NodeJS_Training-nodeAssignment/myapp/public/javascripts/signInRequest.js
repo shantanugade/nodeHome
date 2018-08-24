@@ -9,6 +9,7 @@ signIn = (event) => {
         url: "http://localhost:3000/signin",
         method: "POST",
         data: {
+        
             email : email,
             password: password
         },

@@ -1,8 +1,10 @@
 var mongoose = require('mongoose');
 var userModel = require('../models/user');
+var userActivityModel = require('../models/userActivity');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var request = require('request');
+var moment = require('moment');
 
 
 require('dotenv').config();
@@ -24,8 +26,7 @@ module.exports = {
             userModel.findOne({ email: req.body.email }, (err, result) => {
 
                 if (result === null) {
-                    //   res.json({success: false , data : "Authentication Failed"});
-                    //res.write("Authentication Failed");   
+
                     console.log("Authentication Failed DATA NOT FOUND");
                 }
                 else {
@@ -35,19 +36,41 @@ module.exports = {
                             if (req.body.email === result.email) {
                                 console.log("Authentication Success");
 
+                                    userActivityModel.findOne({userName:req.body.email},(err,person)=>{
+                                            if(err) {
+                                                console.log("====>err",err) 
+                                            } 
+                                            else if(person===null){
+
+                                                var userActivity = new userActivityModel({
+                                                    userId: result._id,
+                                                    userName:result.email,
+                                                    timeStamp: moment().format('x')
+                                                });
+                
+                                                userActivity.save();                                                
+                                            }
+                                            
+                                            else if(person) {
+                                                
+                                                var currentTime = moment().format('x')
+                                                userActivityModel.findOneAndUpdate({userName:result.email},{timeStamp: currentTime});
+                                            }
+                                    })                                
+
+
+
                                 jwt.sign({ userId: result._id }, process.env.SECRETKEY, { expiresIn: '1h' }, (err, token) => {
                                     storeToken(token);
-                                    res.json({success:true,isAdmin:result.isAdmin});
+                                    res.json({ success: true, isAdmin: result.isAdmin });
                                 });
-
-
                                 request.post("http://localhost:3000/home");
-                                
+                               
+                               
                             }
-
                         }
                         else {
-                            res.json({success:false,isAdmin:result.isAdmin});
+                            res.json({ success: false, isAdmin: result.isAdmin });
                             console.log("Authentication failed");
                         }
                     });
@@ -66,7 +89,7 @@ module.exports = {
 
         else if (req.method === 'POST') {
             var user = new userModel({
-                //  userId: new mongoose.Types.ObjectId,
+                 _id:new mongoose.Types.ObjectId(),
                 firstName: req.body.firstName,
                 lastName: req.body.lastName,
                 email: req.body.email,
@@ -91,7 +114,7 @@ module.exports = {
 
                 .then(() => {
                     user.save();
-                    res.json({success:true})
+                    res.json({ success: true })
                 })
 
                 .catch((error) => {
@@ -103,24 +126,150 @@ module.exports = {
 
     home: (req, res, next) => {
         if (req.method === 'GET') {
-            console.log("getmethod");
             res.render('home');
         }
         else if (req.method === 'POST') {
-            console.log("postmethod");
             res.render('home');
         }
     },
 
-    homeAdmin : (req,res,next) => {
+    homeAdmin: (req, res, next) => {
+        
         if (req.method === 'GET') {
-            console.log("getmethod");
             res.render('homeAdmin');
         }
         else if (req.method === 'POST') {
-            console.log("postmethod");
-            res.render('homeAdmin');
-        }
-    }
+      console.log("==>in homeadminpost")
 
+            var currentTime =moment().format('x');
+            userActivityModel.find({})
+            .then((users)=>{
+                var userLoggedIn = [];
+                users.forEach(user => {
+                  
+                    if(moment.duration(currentTime-user.timeStamp).asSeconds() > 200 ){
+                        
+                        userLoggedIn.push(user);
+                    }
+                });
+                console.log("outside===>",userLoggedIn);
+                  ;res.json({userData:userLoggedIn})  
+        }).catch((err)=>{
+            console.log(err);
+        })
+    }
+    },
+
+    userProfile: (req, res, next) => {
+        if (req.method === 'GET') {
+
+            res.render('userProfile');
+
+
+        }
+        else if (req.method === 'POST') {
+            // console.log("token=====>",process.env.TOKEN);
+            jwt.verify(process.env.TOKEN, process.env.SECRETKEY, (err, decoded) => {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    userModel.findOne({ _id: decoded.userId }, (err, result) => {
+
+                        if (result === null) {
+
+                            console.log("Authentication Failed DATA NOT FOUND");
+                        }
+                        else {
+                            res.json(result);
+                        }
+                    });
+                }
+            });
+        }
+    },
+
+    userUpdate: (req, res, next) => {
+
+        if (req.method === 'GET') {
+            res.render('updateUser');
+        }
+        else if (req.method === 'POST') {
+            //res.render('homeAdmin');
+            jwt.verify(process.env.TOKEN, process.env.SECRETKEY, (err, decoded) => {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    userModel.findOne({ _id: decoded.userId }, (err, result) => {
+
+                        if (result === null) {
+
+                            console.log("Authentication Failed DATA NOT FOUND");
+                        }
+                        else {
+                            res.json(result);
+                        }
+                    });
+                }
+            });
+        }
+    },
+    updateUserinDb : (req,res,next) => {
+        if (req.method === 'GET') {
+            res.render('updateUser');
+        }
+        else if (req.method === 'POST') {
+       
+            userModel.findOneAndUpdate({_id:req.body.userId}, { firstName:req.body.userFirstName,
+            lastName: req.body.userLastName }, (err,doc)=>{
+                if(err) {
+                   console.log(err)
+                    res.json({success:false});
+                }
+                else {
+                    console.log(doc);
+                    res.json({success:true})
+                }
+            });
+
+        }
+    },
+
+    allUser : (req,res,next) => {
+        if (req.method === 'GET') {
+            res.render('allUser');
+        }
+        else if (req.method === 'POST') {
+           userModel.find({},(err,usersData) => {
+               if(err) {
+                   console.log(err)
+                   res.json({success:false})
+               }
+               else {
+                   
+                   res.json({success:true,users:usersData});
+               }
+           })
+        }
+    },
+    searchUser: (req, res, next) => {
+        if (req.method === 'GET') {
+            res.render('searchUser');
+            console.log("=====>getserachuser")
+        }
+        else if (req.method === 'POST') {
+            userModel.findOne({email :req.body.email }, (err, result) => {
+
+                if (result === null) {
+
+                    console.log("Authentication Failed DATA NOT FOUND");
+                    res.json(result);
+                }
+                else {
+                    res.json(result);
+                }
+            });
+        }
+    }, 
 }
