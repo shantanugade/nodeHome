@@ -311,6 +311,7 @@ module.exports = {
                 if (result === null) {
                     res.boom.unauthorized("User Not present");
                     res.json(result);
+                    
                 }
                 else {
                     res.json(result);
