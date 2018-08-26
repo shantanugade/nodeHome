@@ -4,7 +4,7 @@ showUser = () => {
         url: "http://localhost:3000/userprofile",
         method: "POST",
         data: {
-            
+            userToken:localStorage.getItem('token')
         },
         success: (result) => {
 

@@ -4,7 +4,7 @@ allUsers = () => {
         url: "http://localhost:3000/alluser",
         method: "POST",
         data: {
-
+            userToken : localStorage.getItem('token'),
         },
         success: (result) => {
 

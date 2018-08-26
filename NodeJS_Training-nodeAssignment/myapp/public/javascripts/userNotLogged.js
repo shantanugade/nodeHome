@@ -4,6 +4,7 @@ userNotLoggedIn = () => {
         url: "http://localhost:3000/homeadmin",
         method: "POST",
         data: {
+            userToken: localStorage.getItem('token')
         },
         success : (result) =>{
             

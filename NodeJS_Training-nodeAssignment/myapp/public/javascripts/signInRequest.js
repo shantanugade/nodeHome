@@ -15,7 +15,9 @@ signIn = (event) => {
         },
         success: (result) => {
             console.log("====>",result.success);
-           
+            console.log("====>",result.authorization);
+            localStorage.setItem("token",result.authorization);
+        
         if(result.success && result.isAdmin){
             window.location.replace('/homeadmin');
         }
