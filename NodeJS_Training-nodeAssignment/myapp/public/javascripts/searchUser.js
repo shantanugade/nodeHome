@@ -1,13 +1,7 @@
 $(document).ready(function(){
-
-
-    document.getElementById('profilecard').style.display="none";
+    $("#profilecard").hide();
 
     searchUser =() => {
-
-
-        
-
 
         $.ajax({
             url: "http://localhost:3000/searchuser",
@@ -17,10 +11,9 @@ $(document).ready(function(){
                 
             },
             success: (result) => {
-                console.log("====>in frontensadd",result.email);
+                
                 if(result===null) {
-                    document.getElementById('email').value = "User Not Found";
-                    document.getElementById('email').style.color="red";
+                    alert("User Not Found");
                 }
     
                 else {

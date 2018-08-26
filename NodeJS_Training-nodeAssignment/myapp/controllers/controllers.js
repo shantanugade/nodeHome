@@ -309,7 +309,7 @@ module.exports = {
             userModel.findOne({email :req.body.email }, (err, result) => {
 
                 if (result === null) {
-                    res.boom.unauthorized("User Not present");
+                    //res.boom.unauthorized("User Not present");
                     res.json(result);
                     
                 }

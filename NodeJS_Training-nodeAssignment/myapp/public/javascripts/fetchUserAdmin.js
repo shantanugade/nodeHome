@@ -1,3 +1,6 @@
+$(document).ready(function(){
+
+
 showUserAdmin = () => {
 
     $.ajax({
@@ -8,13 +11,13 @@ showUserAdmin = () => {
         },
         success: (result) => {
 
-            
+                              
            document.getElementById('fname').innerHTML= result.firstName +" "+ result.lastName
            document.getElementById('email').innerHTML= result.email;
-         
             
         } ,
     
     });
    
 }
+});
